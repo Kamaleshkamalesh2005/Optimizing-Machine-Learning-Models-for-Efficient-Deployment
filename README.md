@@ -16,7 +16,8 @@
 
 ## 📸 Screenshot
 
-![Model Compressor UI](assets/screenshot.png)
+<img width="1126" height="650" alt="screenshot" src="https://github.com/user-attachments/assets/ff9605cc-d57f-4769-918a-475652d43e56" />
+
 
 > *Upload a `.pt` / `.pth` model, watch the real-time compression pipeline, and download the best compressed artifact — all in one page.*
 
