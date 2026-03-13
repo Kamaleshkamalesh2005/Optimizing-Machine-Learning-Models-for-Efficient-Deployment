@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Saved model checkpoints
+saved_models/*.pt
+saved_models/*.pth
+saved_models/*.onnx
+
+# Data cache (CIFAR-10 auto-download)
+data/cifar-10-batches-py/
+data/cifar-10-python.tar.gz
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & TensorBoard
+logs/
+runs/
+*.log

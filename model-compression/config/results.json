@@ -1,0 +1,68 @@
+{
+  "winner": "original",
+  "input_shape": [
+    3,
+    224,
+    224
+  ],
+  "original": {
+    "accuracy": 100.0,
+    "model_size_mb": 12.252639770507812,
+    "latency_p50_ms": 70.92960001318716,
+    "latency_p95_ms": 83.08552503585814,
+    "throughput_samples_per_sec": 93.96780268445312,
+    "parameter_count": 3157200
+  },
+  "compressed": {
+    "accuracy": 100.0,
+    "model_size_mb": 12.252639770507812,
+    "latency_p50_ms": 70.92960001318716,
+    "latency_p95_ms": 83.08552503585814,
+    "throughput_samples_per_sec": 93.96780268445312,
+    "parameter_count": 3157200
+  },
+  "comparison": {
+    "original_size_mb": 12.252639770507812,
+    "compressed_size_mb": 12.252639770507812,
+    "size_reduction_percent": 0.0,
+    "original_accuracy": 100.0,
+    "compressed_accuracy": 100.0,
+    "accuracy_difference": 0.0,
+    "original_latency_ms": 83.08552503585814,
+    "compressed_latency_ms": 83.08552503585814,
+    "speedup": 1.0,
+    "compression_ratio": 1.0
+  },
+  "techniques": {
+    "quantization": {
+      "size_before_mb": 12.252639770507812,
+      "size_after_mb": 12.252639770507812,
+      "size_reduction_percent": 0.0,
+      "accuracy": 100.0
+    },
+    "pruning": {
+      "best_sparsity_percent": 0.0,
+      "accuracy": 100.0
+    },
+    "distillation": {
+      "student_size_percent_of_teacher": 100.0,
+      "accuracy": 100.0,
+      "kept": 0.0,
+      "skipped": 1.0
+    },
+    "onnx": {
+      "torch_p95_ms": 117.24076499231131,
+      "onnx_p95_ms": 13.401480001630254,
+      "onnx_faster": true,
+      "speedup": 8.748344584183933
+    }
+  },
+  "winner_details": {
+    "kept": 1.0
+  },
+  "artifacts": {
+    "compressed_pt": "C:\\Users\\kamal\\Downloads\\Optimizing-Machine-Learning-Models-for-Efficient-Deployment\\model-compression\\compressed\\compressed_model.pt",
+    "compressed_onnx": "C:\\Users\\kamal\\Downloads\\Optimizing-Machine-Learning-Models-for-Efficient-Deployment\\model-compression\\compressed\\compressed_model.onnx"
+  },
+  "onnx_kept": true
+}

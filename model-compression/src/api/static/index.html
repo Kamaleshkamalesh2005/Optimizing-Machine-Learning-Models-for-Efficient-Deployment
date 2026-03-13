@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Compressor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #334155;
+      --ok: #22c55e;
+      --bad: #ef4444;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(1000px, 94vw);
+      margin: 0 auto;
+      padding: 16px 0 28px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .navbar {
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .navbar-inner {
+      width: min(1000px, 94vw);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+    }
+
+    .title {
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bad);
+    }
+
+    .dot.ok { background: var(--ok); }
+
+    .drop-zone {
+      border: 2px dashed var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .drop-zone.dragging {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0b1220;
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      background: #111b2e;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0b1220;
+      font-weight: 700;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 900px) {
+      .row { grid-template-columns: 1fr 1fr; }
+    }
+
+    .info-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #0b1220;
+    }
+
+    .step-list { list-style: none; padding: 0; margin: 0; }
+    .step-list li {
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .step-state.waiting { color: var(--muted); }
+    .step-state.running { color: var(--accent); }
+    .step-state.done { color: var(--ok); }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    @media (min-width: 900px) {
+      .highlights { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .highlight {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0b1220;
+      padding: 10px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .techniques {
+      margin-top: 10px;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .error {
+      color: #fca5a5;
+      min-height: 20px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <div class="title">Model Compressor</div>
+      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Offline</span></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card" id="uploadSection">
+      <h2>Upload</h2>
+      <div id="dropZone" class="drop-zone">Drop your .pt or .pth model file here</div>
+      <input id="fileInput" type="file" accept=".pt,.pth" class="hidden" />
+      <div id="fileMeta">No file selected.</div>
+      <button id="uploadBtn" class="primary" style="margin-top: 10px;">Upload Model</button>
+      <div class="error" id="uploadError"></div>
+
+      <div id="modelInfo" class="row hidden" style="margin-top: 10px;">
+        <div class="info-item">Model size: <strong id="infoSize">-</strong> MB</div>
+        <div class="info-item">Parameters: <strong id="infoParams">-</strong> million</div>
+        <div class="info-item">Layers: <strong id="infoLayers">-</strong></div>
+        <div class="info-item">Input shape: <strong id="infoInput">-</strong></div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="compressSection">
+      <h2>Compress</h2>
+      <button id="compressBtn" class="primary">Compress Model</button>
+      <ul class="step-list" style="margin-top: 10px;">
+        <li><span>Step 1: Quantization</span><span id="state_quantization" class="step-state waiting">waiting</span></li>
+        <li><span>Step 2: Pruning</span><span id="state_pruning" class="step-state waiting">waiting</span></li>
+        <li><span>Step 3: Distillation</span><span id="state_distillation" class="step-state waiting">waiting</span></li>
+        <li><span>Step 4: ONNX Export</span><span id="state_onnx" class="step-state waiting">waiting</span></li>
+      </ul>
+      <div class="error" id="compressError"></div>
+    </section>
+
+    <section class="card hidden" id="resultsSection">
+      <h2>Results</h2>
+      <div class="row">
+        <div class="info-item">
+          <h3>ORIGINAL MODEL</h3>
+          <div>Size: <strong id="origSize">-</strong> MB</div>
+          <div>Accuracy: <strong id="origAcc">-</strong>%</div>
+          <div>Latency: <strong id="origLat">-</strong> ms</div>
+          <div>Parameters: <strong id="origParams">-</strong> M</div>
+        </div>
+        <div class="info-item">
+          <h3>COMPRESSED MODEL</h3>
+          <div>Size: <strong id="compSize">-</strong> MB</div>
+          <div>Accuracy: <strong id="compAcc">-</strong>%</div>
+          <div>Latency: <strong id="compLat">-</strong> ms</div>
+          <div>Parameters: <strong id="compParams">-</strong> M</div>
+        </div>
+      </div>
+
+      <div class="highlights">
+        <div class="highlight" id="hSmaller">-</div>
+        <div class="highlight" id="hAccuracy">-</div>
+        <div class="highlight" id="hFaster">-</div>
+      </div>
+
+      <div class="row">
+        <button id="downloadPt">Download Compressed (.pt)</button>
+        <button id="downloadOnnx">Download Compressed (.onnx)</button>
+      </div>
+
+      <ul class="techniques" id="techList"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Compress Another</h2>
+      <button id="resetBtn">Start Over</button>
+    </section>
+  </main>
+
+  <script>
+    let selectedFile = null;
+    let compressionDone = false;
+
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+
+    function setStatus(online) {
+      document.getElementById("statusDot").classList.toggle("ok", online);
+      document.getElementById("statusText").textContent = online ? "Ready" : "Offline";
+    }
+
+    function setError(id, text) {
+      document.getElementById(id).textContent = text || "";
+    }
+
+    function setStep(name, state) {
+      const el = document.getElementById(`state_${name}`);
+      el.className = `step-state ${state}`;
+      if (state === "running") el.textContent = "running...";
+      if (state === "done") el.textContent = "done";
+      if (state === "waiting") el.textContent = "waiting";
+    }
+
+    async function checkHealth() {
+      try {
+        const res = await fetch("/api/health");
+        setStatus(res.ok);
+      } catch (_) {
+        setStatus(false);
+      }
+    }
+
+    function bindDropZone() {
+      dropZone.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files[0]) setFile(fileInput.files[0]);
+      });
+
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragging");
+      });
+      dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragging"));
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragging");
+        const file = e.dataTransfer.files[0];
+        if (file) setFile(file);
+      });
+    }
+
+    function setFile(file) {
+      selectedFile = file;
+      document.getElementById("fileMeta").textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+    }
+
+    async function uploadModel() {
+      setError("uploadError", "");
+      if (!selectedFile) {
+        setError("uploadError", "Select a .pt or .pth file first.");
+        return;
+      }
+
+      const form = new FormData();
+      form.append("file", selectedFile);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "Upload failed.");
+
+        const info = body.model_info;
+        document.getElementById("modelInfo").classList.remove("hidden");
+        document.getElementById("compressSection").classList.remove("hidden");
+        document.getElementById("infoSize").textContent = Number(info.size_mb).toFixed(3);
+        document.getElementById("infoParams").textContent = (Number(info.parameter_count) / 1e6).toFixed(3);
+        document.getElementById("infoLayers").textContent = info.layer_count;
+        document.getElementById("infoInput").textContent = `[${info.input_shape.join(", ")}]`;
+      } catch (err) {
+        setError("uploadError", err.message || "Upload failed.");
+      }
+    }
+
+    function renderResults(results) {
+      const o = results.original;
+      const c = results.compressed;
+      const cmp = results.comparison;
+      const t = results.techniques;
+
+      document.getElementById("resultsSection").classList.remove("hidden");
+
+      document.getElementById("origSize").textContent = o.model_size_mb.toFixed(3);
+      document.getElementById("origAcc").textContent = o.accuracy.toFixed(2);
+      document.getElementById("origLat").textContent = o.latency_p95_ms.toFixed(3);
+      document.getElementById("origParams").textContent = (o.parameter_count / 1e6).toFixed(3);
+
+      document.getElementById("compSize").textContent = c.model_size_mb.toFixed(3);
+      document.getElementById("compAcc").textContent = c.accuracy.toFixed(2);
+      document.getElementById("compLat").textContent = c.latency_p95_ms.toFixed(3);
+      document.getElementById("compParams").textContent = (c.parameter_count / 1e6).toFixed(3);
+
+      document.getElementById("hSmaller").textContent = `${cmp.size_reduction_percent.toFixed(2)}% smaller`;
+      document.getElementById("hAccuracy").textContent = Math.abs(cmp.accuracy_difference) <= 1 ? "Same accuracy" : `${cmp.accuracy_difference.toFixed(2)}% accuracy diff`;
+      document.getElementById("hFaster").textContent = `${cmp.speedup.toFixed(2)}x faster`;
+
+      const quantReduction = t.quantization ? t.quantization.size_reduction_percent : 0;
+      const pruneSparsity = t.pruning ? t.pruning.best_sparsity_percent : 0;
+      const distillSize = t.distillation ? t.distillation.student_size_percent_of_teacher : 0;
+      const onnxSpeed = t.onnx ? t.onnx.speedup : 0;
+      const distillSkipped = t.distillation && Number(t.distillation.skipped) === 1;
+
+      document.getElementById("techList").innerHTML = `
+        <li>✓ Dynamic Quantization — reduced size by ${Number(quantReduction).toFixed(2)}%</li>
+        <li>✓ Pruning — ${Number(pruneSparsity).toFixed(2)}% sparsity achieved</li>
+        <li>✓ Distillation — ${distillSkipped ? "skipped for unsupported architecture" : `student is ${Number(distillSize).toFixed(2)}% of teacher size`}</li>
+        <li>✓ ONNX — ${Number(onnxSpeed).toFixed(2)}x faster inference</li>
+      `;
+
+      compressionDone = true;
+    }
+
+    function runCompression() {
+      setError("compressError", "");
+      setStep("quantization", "waiting");
+      setStep("pruning", "waiting");
+      setStep("distillation", "waiting");
+      setStep("onnx", "waiting");
+
+      const es = new EventSource("/api/compress");
+      es.onmessage = (evt) => {
+        const data = JSON.parse(evt.data);
+
+        if (data.step === "quantization") setStep("quantization", data.status === "running" ? "running" : "done");
+        if (data.step === "pruning") setStep("pruning", data.status === "running" ? "running" : "done");
+        if (data.step === "distillation") setStep("distillation", data.status === "running" ? "running" : "done");
+        if (data.step === "onnx") setStep("onnx", data.status === "running" ? "running" : "done");
+
+        if (data.status === "done") {
+          renderResults(data.results);
+          es.close();
+        }
+
+        if (data.status === "error") {
+          setError("compressError", data.message || "Compression failed.");
+          es.close();
+        }
+      };
+
+      es.onerror = () => {
+        if (!compressionDone) setError("compressError", "Compression stream disconnected.");
+        es.close();
+      };
+    }
+
+    function resetAll() {
+      selectedFile = null;
+      compressionDone = false;
+      fileInput.value = "";
+      document.getElementById("fileMeta").textContent = "No file selected.";
+      document.getElementById("modelInfo").classList.add("hidden");
+      document.getElementById("compressSection").classList.add("hidden");
+      document.getElementById("resultsSection").classList.add("hidden");
+      setError("uploadError", "");
+      setError("compressError", "");
+      setStep("quantization", "waiting");
+      setStep("pruning", "waiting");
+      setStep("distillation", "waiting");
+      setStep("onnx", "waiting");
+    }
+
+    document.getElementById("uploadBtn").addEventListener("click", uploadModel);
+    document.getElementById("compressBtn").addEventListener("click", runCompression);
+    document.getElementById("resetBtn").addEventListener("click", resetAll);
+    document.getElementById("downloadPt").addEventListener("click", () => { window.location.href = "/api/download/compressed"; });
+    document.getElementById("downloadOnnx").addEventListener("click", () => { window.location.href = "/api/download/onnx"; });
+
+    bindDropZone();
+    checkHealth();
+  </script>
+</body>
+</html>
